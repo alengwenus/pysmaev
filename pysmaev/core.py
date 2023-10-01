@@ -5,7 +5,16 @@ import logging
 
 import httpx
 
-from .const import HEADER_CONTENT_TYPE_TOKEN, TOKEN_TIMEOUT, URL_TOKEN
+from .const import (
+    CONTENT_MEASUREMENT,
+    CONTENT_PARAMETERS,
+    HEADER_CONTENT_TYPE_JSON,
+    HEADER_CONTENT_TYPE_TOKEN,
+    TOKEN_TIMEOUT,
+    URL_MEASUREMENTS,
+    URL_PARAMETERS,
+    URL_TOKEN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.DEBUG)
@@ -70,8 +79,33 @@ class SmaEvCharger:
         url = f"{self.url}{URL_TOKEN}"
         headers = {"Content-Type": HEADER_CONTENT_TYPE_TOKEN}
         content = f"grant_type=password&username={self.username}&password={self.password}".encode()
-        async with httpx.AsyncClient(verify=False) as client:
-            response = await client.post(url, headers=headers, content=content)
+        response = await self.client.post(url, headers=headers, content=content)
+        response.raise_for_status()
+        result = response.json()
+        return result
+
+    async def request_measurements(self) -> str:
+        """Request measurements document."""
+        url = f"{self.url}{URL_MEASUREMENTS}"
+        headers = {
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": HEADER_CONTENT_TYPE_JSON,
+        }
+        content = CONTENT_MEASUREMENT.encode()
+        response = await self.client.post(url, headers=headers, content=content)
+        response.raise_for_status()
+        result = response.json()
+        return result
+
+    async def request_parameters(self) -> str:
+        """Request parameters document."""
+        url = f"{self.url}{URL_PARAMETERS}"
+        headers = {
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": HEADER_CONTENT_TYPE_JSON,
+        }
+        content = CONTENT_PARAMETERS.encode()
+        response = await self.client.post(url, headers=headers, content=content)
         response.raise_for_status()
         result = response.json()
         return result
