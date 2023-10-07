@@ -20,7 +20,7 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.DEBUG)
 
 
-class SmaEvCharger:
+class SmaEvChargerSession:
     """Class to connect to the SMA EV Charger."""
 
     def __init__(
@@ -39,10 +39,10 @@ class SmaEvCharger:
         self.is_closed = True
         self.token_refresh_task: asyncio.Task | None = None
 
-    async def new_session(self) -> bool:
+    async def open(self) -> bool:
         """Establish a new session."""
         # TODO: Error Handling
-        _LOGGER.debug("Establishing new SmaEvCharger session.")
+        _LOGGER.debug("Establishing new SmaEvCharger session to %s.", self.url)
         self.client = httpx.AsyncClient(verify=self.ssl_verify)
         self.is_closed = False
         self.token_refresh_task = asyncio.create_task(self.token_refresh())
@@ -50,7 +50,7 @@ class SmaEvCharger:
         _LOGGER.debug("New SmaEvCharger session established.")
         return True
 
-    async def close_session(self) -> None:
+    async def close(self) -> None:
         """Close session."""
         self.is_closed = True
         self.token_refresh_task.cancel()
