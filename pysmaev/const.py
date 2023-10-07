@@ -10,4 +10,5 @@ CONTENT_PARAMETERS = '{"queryItems":[{"componentId":"IGULD:SELF"}]}'
 HEADER_CONTENT_TYPE_TOKEN = "application/x-www-form-urlencoded"
 HEADER_CONTENT_TYPE_JSON = "application/json"
 
+REQUEST_TIMEOUT = 15
 TOKEN_TIMEOUT = 3000

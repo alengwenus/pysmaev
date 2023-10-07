@@ -1,16 +1,18 @@
 """SMA EV Charger connection."""
 
 import asyncio
+import json
 import logging
 from typing import Any
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout, client_exceptions
 
 from .const import (
     CONTENT_MEASUREMENT,
     CONTENT_PARAMETERS,
     HEADER_CONTENT_TYPE_JSON,
     HEADER_CONTENT_TYPE_TOKEN,
+    REQUEST_TIMEOUT,
     TOKEN_TIMEOUT,
     URL_MEASUREMENTS,
     URL_PARAMETERS,
@@ -22,6 +24,18 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.DEBUG)
 
 
+class SmaEvChargerException(Exception):
+    """Base exception for pysmaev."""
+
+
+class SmaEvChargerConnectionException(SmaEvChargerException):
+    """Server connection exception."""
+
+
+class SmaEvChargerAuthenticationException(SmaEvChargerException):
+    """Server authentication exception."""
+
+
 class SmaEvCharger:
     """Class to connect to the SMA EV Charger."""
 
@@ -31,7 +45,6 @@ class SmaEvCharger:
         url: str,
         username: str,
         password: str,
-        ssl_verify=False,
     ) -> None:
         """Initialize a connection to SMA EV Charger."""
         self.session = session
@@ -39,29 +52,30 @@ class SmaEvCharger:
         self.password = password
         self.url = url.rstrip("/")
         if not url.startswith("http"):
-            self.url = f"https://{self.url}"
-        self.ssl_verify = ssl_verify
+            self.url = f"http://{self.url}"
         self.client = None
         self.access_token = ""
-        self.access_token_received = asyncio.Event()
         self.is_closed = True
-        self.token_refresh_task: asyncio.Task | None = None
+        self.token_refresh_handle: asyncio.TimerHandle | None = None
 
     async def open(self) -> bool:
         """Establish a new session."""
-        # TODO: Error Handling
         _LOGGER.debug("Establishing new SmaEvCharger session to %s.", self.url)
         self.is_closed = False
-        self.token_refresh_task = asyncio.create_task(self.token_refresh())
-        await self.access_token_received.wait()
+        try:
+            await self.request_token(auto_refresh=True)
+        except client_exceptions.ClientResponseError as exc:
+            raise SmaEvChargerAuthenticationException(
+                "Could not authorize. Invalid credentials?"
+            ) from exc
+
         _LOGGER.debug("New SmaEvCharger session established.")
         return True
 
     async def close(self) -> None:
         """Close session."""
         self.is_closed = True
-        self.token_refresh_task.cancel()
-        await self.token_refresh_task
+        self.token_refresh_handle.cancel()
         _LOGGER.debug("SmaEVCharger session is closed.")
 
     async def __aenter__(self):
@@ -73,54 +87,65 @@ class SmaEvCharger:
         """Exit async context."""
         await self.close()
 
-    async def token_refresh(self) -> None:
-        """Refresh token loop."""
-        while not self.is_closed:
-            try:
-                self.access_token_received.clear()
-                result = await self.request_token()
-                self.access_token = result["access_token"]
-                expires_in = int(result["expires_in"])
-                _LOGGER.debug("New access_token: %s", self.access_token)
-                self.access_token_received.set()
-                await asyncio.sleep(min(expires_in, TOKEN_TIMEOUT))
-            except asyncio.CancelledError:
-                self.access_token_received.clear()
-                self.access_token = ""
-                break
+    async def request_json(self, url: str, data: str, headers: str | None = None):
+        """Request json document."""
+        request_url = self.url + url
+        if headers is None:
+            headers = {
+                "Authorization": f"Bearer {self.access_token}",
+                "Content-Type": HEADER_CONTENT_TYPE_JSON,
+            }
+        _LOGGER.debug("Request to %s: %s", request_url, data)
+        try:
+            async with self.session.post(
+                request_url,
+                headers=headers,
+                data=data.encode(),
+                timeout=ClientTimeout(total=REQUEST_TIMEOUT),
+            ) as response:
+                response.raise_for_status()
+                response_json = await response.json()
+                _LOGGER.debug("Response received: %s", response_json)
+                return response_json or {}
+        except (client_exceptions.ContentTypeError, json.decoder.JSONDecodeError):
+            _LOGGER.warning("Request to %s did not return valid json.", request_url)
+        except client_exceptions.ServerDisconnectedError as exc:
+            raise SmaEvChargerConnectionException(
+                f"Server at {self.url} disconnected."
+            ) from exc
+        except (
+            client_exceptions.ClientConnectionError,
+            asyncio.exceptions.TimeoutError,
+        ) as exc:
+            raise SmaEvChargerConnectionException(
+                f"Could not connect to SMA EV Charger at {self.url}: {exc}"
+            ) from exc
 
-    async def request_token(self) -> str:
-        """Request new token."""
-        url = f"{self.url}{URL_TOKEN}"
+        return {}
+
+    async def request_token(self, auto_refresh=True) -> str:
+        """Request new token document."""
         headers = {"Content-Type": HEADER_CONTENT_TYPE_TOKEN}
-        data = f"grant_type=password&username={self.username}&password={self.password}".encode()
-        async with self.session.post(url, headers=headers, data=data) as response:
-            result = await response.json()
+        data = f"grant_type=password&username={self.username}&password={self.password}"
+        result = await self.request_json(URL_TOKEN, data, headers=headers)
+        self.access_token = result["access_token"]
+        _LOGGER.debug("New access_token: %s", self.access_token)
+
+        if auto_refresh:
+            self.token_refresh_handle = asyncio.get_event_loop().call_later(
+                TOKEN_TIMEOUT,
+                lambda: asyncio.create_task(self.request_token(auto_refresh=True)),
+            )
+
         return result
 
     async def request_measurements(self) -> str:
         """Request measurements document."""
-        url = f"{self.url}{URL_MEASUREMENTS}"
-        headers = {
-            "Authorization": f"Bearer {self.access_token}",
-            "Content-Type": HEADER_CONTENT_TYPE_JSON,
-        }
-        data = CONTENT_MEASUREMENT.encode()
-        async with self.session.post(url, headers=headers, data=data) as response:
-            result = await response.json()
-        return result
+        return await self.request_json(URL_MEASUREMENTS, CONTENT_MEASUREMENT)
 
     async def request_parameters(self) -> str:
         """Request parameters document."""
-        url = f"{self.url}{URL_PARAMETERS}"
-        headers = {
-            "Authorization": f"Bearer {self.access_token}",
-            "Content-Type": HEADER_CONTENT_TYPE_JSON,
-        }
-        data = CONTENT_PARAMETERS.encode()
-        async with self.session.post(url, headers=headers, data=data) as response:
-            result = await response.json()
-        return result
+        return await self.request_json(URL_PARAMETERS, CONTENT_PARAMETERS)
 
     async def device_info(self) -> dict:
         """Read device info."""
