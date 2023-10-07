@@ -16,6 +16,7 @@ from .const import (
     URL_PARAMETERS,
     URL_TOKEN,
 )
+from .helpers import get_channel
 
 _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.DEBUG)
@@ -120,3 +121,20 @@ class SmaEvCharger:
         async with self.session.post(url, headers=headers, data=data) as response:
             result = await response.json()
         return result
+
+    async def device_info(self) -> dict:
+        """Read device info."""
+        params = await self.request_parameters()
+        name_channel = get_channel(params, channel_id="Parameter.Nameplate.Location")
+        serial_channel = get_channel(params, channel_id="Parameter.Nameplate.SerNum")
+        model_channel = get_channel(params, channel_id="Parameter.Nameplate.ModelStr")
+        manu_channel = get_channel(params, channel_id="Parameter.Nameplate.Vendor")
+        pkgrev_channel = get_channel(params, channel_id="Parameter.Nameplate.PkgRev")
+        device_info = {
+            "name": name_channel["value"],
+            "serial": serial_channel["value"],
+            "model": model_channel["value"],
+            "manufacturer": "SMA" if manu_channel["value"] == "461" else "unknown",
+            "sw_version": pkgrev_channel["value"],
+        }
+        return device_info
