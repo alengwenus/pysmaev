@@ -3,5 +3,5 @@
 
 __all__: tuple[str, ...] = (
     # core
-    "SmaEvChargerSession",
+    "SmaEvCharger",
 )

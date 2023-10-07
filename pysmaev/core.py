@@ -2,8 +2,9 @@
 
 import asyncio
 import logging
+from typing import Any
 
-import httpx
+from aiohttp import ClientSession
 
 from .const import (
     CONTENT_MEASUREMENT,
@@ -20,13 +21,19 @@ _LOGGER = logging.getLogger(__name__)
 _LOGGER.setLevel(logging.DEBUG)
 
 
-class SmaEvChargerSession:
+class SmaEvCharger:
     """Class to connect to the SMA EV Charger."""
 
     def __init__(
-        self, url: str, username: str, password: str, ssl_verify=False
+        self,
+        session: ClientSession,
+        url: str,
+        username: str,
+        password: str,
+        ssl_verify=False,
     ) -> None:
         """Initialize a connection to SMA EV Charger."""
+        self.session = session
         self.username = username
         self.password = password
         self.url = url.rstrip("/")
@@ -43,7 +50,6 @@ class SmaEvChargerSession:
         """Establish a new session."""
         # TODO: Error Handling
         _LOGGER.debug("Establishing new SmaEvCharger session to %s.", self.url)
-        self.client = httpx.AsyncClient(verify=self.ssl_verify)
         self.is_closed = False
         self.token_refresh_task = asyncio.create_task(self.token_refresh())
         await self.access_token_received.wait()
@@ -55,8 +61,16 @@ class SmaEvChargerSession:
         self.is_closed = True
         self.token_refresh_task.cancel()
         await self.token_refresh_task
-        self.client = None
         _LOGGER.debug("SmaEVCharger session is closed.")
+
+    async def __aenter__(self):
+        """Enter async context."""
+        await self.open()
+        return self
+
+    async def __aexit__(self, exception_type: Any, exception: Any, traceback: Any):
+        """Exit async context."""
+        await self.close()
 
     async def token_refresh(self) -> None:
         """Refresh token loop."""
@@ -78,10 +92,9 @@ class SmaEvChargerSession:
         """Request new token."""
         url = f"{self.url}{URL_TOKEN}"
         headers = {"Content-Type": HEADER_CONTENT_TYPE_TOKEN}
-        content = f"grant_type=password&username={self.username}&password={self.password}".encode()
-        response = await self.client.post(url, headers=headers, content=content)
-        response.raise_for_status()
-        result = response.json()
+        data = f"grant_type=password&username={self.username}&password={self.password}".encode()
+        async with self.session.post(url, headers=headers, data=data) as response:
+            result = await response.json()
         return result
 
     async def request_measurements(self) -> str:
@@ -91,10 +104,9 @@ class SmaEvChargerSession:
             "Authorization": f"Bearer {self.access_token}",
             "Content-Type": HEADER_CONTENT_TYPE_JSON,
         }
-        content = CONTENT_MEASUREMENT.encode()
-        response = await self.client.post(url, headers=headers, content=content)
-        response.raise_for_status()
-        result = response.json()
+        data = CONTENT_MEASUREMENT.encode()
+        async with self.session.post(url, headers=headers, data=data) as response:
+            result = await response.json()
         return result
 
     async def request_parameters(self) -> str:
@@ -104,8 +116,7 @@ class SmaEvChargerSession:
             "Authorization": f"Bearer {self.access_token}",
             "Content-Type": HEADER_CONTENT_TYPE_JSON,
         }
-        content = CONTENT_PARAMETERS.encode()
-        response = await self.client.post(url, headers=headers, content=content)
-        response.raise_for_status()
-        result = response.json()
+        data = CONTENT_PARAMETERS.encode()
+        async with self.session.post(url, headers=headers, data=data) as response:
+            result = await response.json()
         return result
