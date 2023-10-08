@@ -18,10 +18,10 @@ from .const import (
     URL_PARAMETERS,
     URL_TOKEN,
 )
-from .helpers import get_channel
+from .helpers import get_parameters_channel
 
 _LOGGER = logging.getLogger(__name__)
-_LOGGER.setLevel(logging.DEBUG)
+# _LOGGER.setLevel(logging.DEBUG)
 
 
 class SmaEvChargerException(Exception):
@@ -87,7 +87,9 @@ class SmaEvCharger:
         """Exit async context."""
         await self.close()
 
-    async def request_json(self, url: str, data: str, headers: str | None = None):
+    async def request_json(
+        self, url: str, data: str, headers: str | None = None
+    ) -> dict:
         """Request json document."""
         request_url = self.url + url
         if headers is None:
@@ -123,7 +125,7 @@ class SmaEvCharger:
 
         return {}
 
-    async def request_token(self, auto_refresh=True) -> str:
+    async def request_token(self, auto_refresh: bool = True) -> str:
         """Request new token document."""
         headers = {"Content-Type": HEADER_CONTENT_TYPE_TOKEN}
         data = f"grant_type=password&username={self.username}&password={self.password}"
@@ -150,11 +152,21 @@ class SmaEvCharger:
     async def device_info(self) -> dict:
         """Read device info."""
         params = await self.request_parameters()
-        name_channel = get_channel(params, channel_id="Parameter.Nameplate.Location")
-        serial_channel = get_channel(params, channel_id="Parameter.Nameplate.SerNum")
-        model_channel = get_channel(params, channel_id="Parameter.Nameplate.ModelStr")
-        manu_channel = get_channel(params, channel_id="Parameter.Nameplate.Vendor")
-        pkgrev_channel = get_channel(params, channel_id="Parameter.Nameplate.PkgRev")
+        name_channel = get_parameters_channel(
+            params, channel_id="Parameter.Nameplate.Location"
+        )
+        serial_channel = get_parameters_channel(
+            params, channel_id="Parameter.Nameplate.SerNum"
+        )
+        model_channel = get_parameters_channel(
+            params, channel_id="Parameter.Nameplate.ModelStr"
+        )
+        manu_channel = get_parameters_channel(
+            params, channel_id="Parameter.Nameplate.Vendor"
+        )
+        pkgrev_channel = get_parameters_channel(
+            params, channel_id="Parameter.Nameplate.PkgRev"
+        )
         device_info = {
             "name": name_channel["value"],
             "serial": serial_channel["value"],
