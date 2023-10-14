@@ -1,5 +1,7 @@
 """Helpers for pysmaev."""
 
+from datetime import datetime
+
 
 def get_measurements_channel(
     measurements: list[dict], channel_id: str, component_id: str = "IGULD:SELF"
@@ -36,3 +38,8 @@ def get_parameters_channel(
         raise KeyError(f"channel_id {channel_id} does not exist")
 
     return channel
+
+
+def create_timestamp(timestamp: datetime):
+    """Create timestamp in EV Charger format."""
+    return f"{timestamp.isoformat(timespec='milliseconds').split('+')[0]}Z"

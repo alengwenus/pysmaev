@@ -3,6 +3,7 @@
 URL_TOKEN = "/api/v1/token"
 URL_MEASUREMENTS = "/api/v1/measurements/live"
 URL_PARAMETERS = "/api/v1/parameters/search"
+URL_SET_PARAMETERS = "/api/v1/parameters"
 
 CONTENT_MEASUREMENT = '[{"componentId":"IGULD:SELF"}]'
 CONTENT_PARAMETERS = '{"queryItems":[{"componentId":"IGULD:SELF"}]}'

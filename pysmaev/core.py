@@ -1,11 +1,12 @@
 """SMA EV Charger connection."""
 
 import asyncio
+from datetime import UTC, datetime
 import json
 import logging
 from typing import Any
 
-from aiohttp import ClientSession, ClientTimeout, client_exceptions
+from aiohttp import ClientSession, ClientTimeout, client_exceptions, hdrs
 
 from .const import (
     CONTENT_MEASUREMENT,
@@ -16,9 +17,10 @@ from .const import (
     TOKEN_TIMEOUT,
     URL_MEASUREMENTS,
     URL_PARAMETERS,
+    URL_SET_PARAMETERS,
     URL_TOKEN,
 )
-from .helpers import get_parameters_channel
+from .helpers import create_timestamp, get_parameters_channel
 
 _LOGGER = logging.getLogger(__name__)
 # _LOGGER.setLevel(logging.DEBUG)
@@ -88,7 +90,7 @@ class SmaEvCharger:
         await self.close()
 
     async def request_json(
-        self, url: str, data: str, headers: str | None = None
+        self, method: str, url: str, data: str, headers: str | None = None
     ) -> dict:
         """Request json document."""
         request_url = self.url + url
@@ -97,9 +99,10 @@ class SmaEvCharger:
                 "Authorization": f"Bearer {self.access_token}",
                 "Content-Type": HEADER_CONTENT_TYPE_JSON,
             }
-        _LOGGER.debug("Request to %s: %s", request_url, data)
+        _LOGGER.debug("Request %s to %s: %s", method, request_url, data)
         try:
-            async with self.session.post(
+            async with self.session.request(
+                method,
                 request_url,
                 headers=headers,
                 data=data.encode(),
@@ -129,7 +132,9 @@ class SmaEvCharger:
         """Request new token document."""
         headers = {"Content-Type": HEADER_CONTENT_TYPE_TOKEN}
         data = f"grant_type=password&username={self.username}&password={self.password}"
-        result = await self.request_json(URL_TOKEN, data, headers=headers)
+        result = await self.request_json(
+            hdrs.METH_POST, URL_TOKEN, data, headers=headers
+        )
         self.access_token = result["access_token"]
         _LOGGER.debug("New access_token: %s", self.access_token)
 
@@ -142,12 +147,32 @@ class SmaEvCharger:
         return result
 
     async def request_measurements(self) -> str:
-        """Request measurements document."""
-        return await self.request_json(URL_MEASUREMENTS, CONTENT_MEASUREMENT)
+        """Request measurements."""
+        return await self.request_json(
+            hdrs.METH_POST, URL_MEASUREMENTS, CONTENT_MEASUREMENT
+        )
 
     async def request_parameters(self) -> str:
-        """Request parameters document."""
-        return await self.request_json(URL_PARAMETERS, CONTENT_PARAMETERS)
+        """Request parameters."""
+        return await self.request_json(
+            hdrs.METH_POST, URL_PARAMETERS, CONTENT_PARAMETERS
+        )
+
+    async def set_parameter(
+        self, value: str, channel_id: str, component_id: str = "IGULD:SELF"
+    ) -> str:
+        """Set parameters."""
+        request_url = URL_SET_PARAMETERS + "/" + component_id
+        data = {
+            "values": [
+                {
+                    "channelId": channel_id,
+                    "timestamp": create_timestamp(datetime.now(UTC)),
+                    "value": value,
+                }
+            ]
+        }
+        return await self.request_json(hdrs.METH_PUT, request_url, json.dumps(data))
 
     async def device_info(self) -> dict:
         """Read device info."""
