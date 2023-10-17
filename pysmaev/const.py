@@ -32,6 +32,10 @@ class SmaEvChargerMeasurements(Enum):
 class SmaEvChargerParameters(StrEnum):
     """EV Charger Parameters."""
 
+    # General
+    YES = "1129"
+    NO = "1130"
+
     # Operating mode of charge session
     BOOST_CHARGING = "4718"
     OPTIMIZED_CHARGING = "4719"
