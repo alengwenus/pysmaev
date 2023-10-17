@@ -20,7 +20,7 @@ from .const import (
     URL_SET_PARAMETERS,
     URL_TOKEN,
 )
-from .helpers import create_timestamp, get_parameters_channel
+from .helpers import evchargerformat, get_parameters_channel
 
 _LOGGER = logging.getLogger(__name__)
 # _LOGGER.setLevel(logging.DEBUG)
@@ -167,7 +167,7 @@ class SmaEvCharger:
             "values": [
                 {
                     "channelId": channel_id,
-                    "timestamp": create_timestamp(datetime.now(UTC)),
+                    "timestamp": evchargerformat(datetime.now(UTC)),
                     "value": value,
                 }
             ]

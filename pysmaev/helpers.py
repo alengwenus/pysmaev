@@ -40,6 +40,6 @@ def get_parameters_channel(
     return channel
 
 
-def create_timestamp(timestamp: datetime):
-    """Create timestamp in EV Charger format."""
+def evchargerformat(timestamp: datetime):
+    """Convert timestamp to EV Charger format."""
     return f"{timestamp.isoformat(timespec='milliseconds').split('+')[0]}Z"
