@@ -1,7 +1,6 @@
 """SMA EV Charger connection."""
 
 import asyncio
-from datetime import UTC, datetime
 import json
 import logging
 from typing import Any
@@ -20,7 +19,7 @@ from .const import (
     URL_SET_PARAMETERS,
     URL_TOKEN,
 )
-from .helpers import evchargerformat, get_parameters_channel
+from .helpers import get_parameters_channel
 
 _LOGGER = logging.getLogger(__name__)
 # _LOGGER.setLevel(logging.DEBUG)
@@ -167,7 +166,6 @@ class SmaEvCharger:
             "values": [
                 {
                     "channelId": channel_id,
-                    "timestamp": evchargerformat(datetime.now(UTC)),
                     "value": value,
                 }
             ]
