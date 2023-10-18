@@ -1,5 +1,5 @@
 """Constants for pysmaev."""
-from enum import Enum, StrEnum
+from enum import IntEnum, StrEnum
 
 URL_TOKEN = "/api/v1/token"
 URL_MEASUREMENTS = "/api/v1/measurements/live"
@@ -16,7 +16,7 @@ REQUEST_TIMEOUT = 15
 TOKEN_TIMEOUT = 3000
 
 
-class SmaEvChargerMeasurements(Enum):
+class SmaEvChargerMeasurements(IntEnum):
     """EV Charger Measurements."""
 
     # Position of rotary switch
