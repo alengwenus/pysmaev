@@ -9,11 +9,11 @@ URL_SET_PARAMETERS = "/api/v1/parameters"
 CONTENT_MEASUREMENT = '[{"componentId":"IGULD:SELF"}]'
 CONTENT_PARAMETERS = '{"queryItems":[{"componentId":"IGULD:SELF"}]}'
 
-HEADER_CONTENT_TYPE_TOKEN = "application/x-www-form-urlencoded"
+HEADER_CONTENT_TYPE_TOKEN = "application/x-www-form-urlencoded;charset=UTF-8"
 HEADER_CONTENT_TYPE_JSON = "application/json"
 
 REQUEST_TIMEOUT = 15
-TOKEN_TIMEOUT = 3000
+TOKEN_TIMEOUT = 3600
 
 
 class SmaEvChargerMeasurements(IntEnum):

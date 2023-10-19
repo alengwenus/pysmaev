@@ -1,6 +1,7 @@
 """SMA EV Charger connection."""
 
 import asyncio
+from datetime import UTC, datetime
 import json
 import logging
 from typing import Any
@@ -19,7 +20,7 @@ from .const import (
     URL_SET_PARAMETERS,
     URL_TOKEN,
 )
-from .helpers import get_parameters_channel
+from .helpers import evchargerformat, get_parameters_channel
 
 _LOGGER = logging.getLogger(__name__)
 # _LOGGER.setLevel(logging.DEBUG)
@@ -56,6 +57,7 @@ class SmaEvCharger:
             self.url = f"http://{self.url}"
         self.client = None
         self.access_token = ""
+        self.refresh_token = ""
         self.is_closed = True
         self.token_refresh_handle: asyncio.TimerHandle | None = None
 
@@ -93,10 +95,12 @@ class SmaEvCharger:
     ) -> dict:
         """Request json document."""
         request_url = self.url + url
+        data_encoded = data.encode()
         if headers is None:
             headers = {
                 "Authorization": f"Bearer {self.access_token}",
                 "Content-Type": HEADER_CONTENT_TYPE_JSON,
+                "Content-Length": f"{len(data_encoded)}",
             }
         _LOGGER.debug("Request %s to %s: %s", method, request_url, data)
         try:
@@ -104,7 +108,7 @@ class SmaEvCharger:
                 method,
                 request_url,
                 headers=headers,
-                data=data.encode(),
+                data=data_encoded,
                 timeout=ClientTimeout(total=REQUEST_TIMEOUT),
             ) as response:
                 response.raise_for_status()
@@ -130,16 +134,24 @@ class SmaEvCharger:
     async def request_token(self, auto_refresh: bool = True) -> str:
         """Request new token document."""
         headers = {"Content-Type": HEADER_CONTENT_TYPE_TOKEN}
-        data = f"grant_type=password&username={self.username}&password={self.password}"
+        if self.refresh_token:
+            data = f"grant_type=refresh_token&refresh_token={self.refresh_token}"
+        else:
+            data = (
+                f"grant_type=password&username={self.username}&password={self.password}"
+            )
         result = await self.request_json(
             hdrs.METH_POST, URL_TOKEN, data, headers=headers
         )
         self.access_token = result["access_token"]
-        _LOGGER.debug("New access_token: %s", self.access_token)
+        self.refresh_token = result["refresh_token"]
+        expires_in = result.get("expires_in", TOKEN_TIMEOUT)
+        _LOGGER.debug("New access token: %s", self.access_token)
+        _LOGGER.debug("New refresh token: %s", self.refresh_token)
 
         if auto_refresh:
             self.token_refresh_handle = asyncio.get_event_loop().call_later(
-                TOKEN_TIMEOUT,
+                int(expires_in * 0.9),
                 lambda: asyncio.create_task(self.request_token(auto_refresh=True)),
             )
 
@@ -166,11 +178,13 @@ class SmaEvCharger:
             "values": [
                 {
                     "channelId": channel_id,
+                    "timestamp": evchargerformat(datetime.now(tz=UTC)),
                     "value": value,
                 }
             ]
         }
-        return await self.request_json(hdrs.METH_PUT, request_url, json.dumps(data))
+        data_json = json.dumps(data, separators=(",", ":"))
+        return await self.request_json(hdrs.METH_PUT, request_url, data_json)
 
     async def device_info(self) -> dict:
         """Read device info."""
