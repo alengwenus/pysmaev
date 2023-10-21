@@ -78,7 +78,8 @@ class SmaEvCharger:
     async def close(self) -> None:
         """Close session."""
         self.is_closed = True
-        self.token_refresh_handle.cancel()
+        if self.token_refresh_handle is not None:
+            self.token_refresh_handle.cancel()
         _LOGGER.debug("SmaEVCharger session is closed.")
 
     async def __aenter__(self):
