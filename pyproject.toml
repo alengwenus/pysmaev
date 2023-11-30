@@ -22,7 +22,7 @@ classifiers = [
 ]
 requires-python = ">=3.11.0"
 dependencies    = [
-    "httpx==0.24.1",
+    "aiohttp==3.9.1",
 ]
 
 [project.urls]
