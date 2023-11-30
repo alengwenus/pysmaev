@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name        = "pysmaev"
-version     = "0.1.1"
+version     = "0.1.2"
 license     = {text = "MIT"}
 description = "SMA EV Charger library"
 readme      = "README.md"
@@ -22,7 +22,7 @@ classifiers = [
 ]
 requires-python = ">=3.11.0"
 dependencies    = [
-    "aiohttp==3.9.1",
+    "aiohttp>3.3,<4",
 ]
 
 [project.urls]
