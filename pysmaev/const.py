@@ -19,6 +19,12 @@ TOKEN_TIMEOUT = 3600
 class SmaEvChargerMeasurements(IntEnum):
     """EV Charger Measurements."""
 
+    # Status
+    OK = 307
+    WARNING = 455
+    ALARM = 35
+    OFF = 303
+
     # Position of rotary switch
     SMART_CHARGING = 4950
     BOOST_CHARGING = 4718
