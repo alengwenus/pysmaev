@@ -158,13 +158,13 @@ class SmaEvCharger:
 
         return result
 
-    async def request_measurements(self) -> str:
+    async def request_measurements(self) -> dict:
         """Request measurements."""
         return await self.request_json(
             hdrs.METH_POST, URL_MEASUREMENTS, CONTENT_MEASUREMENT
         )
 
-    async def request_parameters(self) -> str:
+    async def request_parameters(self) -> dict:
         """Request parameters."""
         return await self.request_json(
             hdrs.METH_POST, URL_PARAMETERS, CONTENT_PARAMETERS
@@ -172,7 +172,7 @@ class SmaEvCharger:
 
     async def set_parameter(
         self, value: str, channel_id: str, component_id: str = "IGULD:SELF"
-    ) -> str:
+    ) -> dict:
         """Set parameters."""
         request_url = URL_SET_PARAMETERS + "/" + component_id
         data = {

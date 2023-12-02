@@ -1,0 +1,32 @@
+[
+  {
+    "channelId": "Measurement.ChaSess.WhIn",
+    "componentId": "IGULD:SELF",
+    "values": [
+      {
+        "time": "2023-12-03T04:56:07.123Z",
+        "value": 420
+      }
+    ]
+  },
+  {
+    "channelId": "Measurement.Chrg.ModSw",
+    "componentId": "IGULD:SELF",
+    "values": [
+      {
+        "time": "2023-12-03T04:56:07.123Z",
+        "value": 4950
+      }
+    ]
+  },
+  {
+    "channelId": "Measurement.Operation.EVeh.Health",
+    "componentId": "IGULD:SELF",
+    "values": [
+      {
+        "time": "2023-12-03T04:56:07.123Z",
+        "value": 307
+      }
+    ]
+  }
+]

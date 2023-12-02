@@ -1,0 +1,29 @@
+[
+  {
+    "componentId": "IGULD:SELF",
+    "values": [
+      {
+        "channelId": "Parameter.Chrg.ActChaMod",
+        "editable": true,
+        "possibleValues": ["4719", "4720", "4721"],
+        "state": "Confirmed",
+        "timestamp": "2023-12-03T04:56:07.123Z",
+        "value": "4719"
+      },
+      {
+        "channelId": "Parameter.Chrg.Plan.DurTmm",
+        "editable": true,
+        "state": "Confirmed",
+        "timestamp": "2023-12-03T04:56:07.123Z",
+        "value": "0"
+      },
+      {
+        "channelId": "Parameter.Chrg.Plan.StopTm",
+        "editable": true,
+        "state": "Confirmed",
+        "timestamp": "2023-12-03T04:56:07.123Z",
+        "value": "1701579367"
+      }
+    ]
+  }
+]
