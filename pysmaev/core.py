@@ -64,14 +64,14 @@ class SmaEvCharger:
     async def open(self) -> bool:
         """Establish a new session."""
         _LOGGER.debug("Establishing new SmaEvCharger session to %s.", self.url)
-        self.is_closed = False
         try:
-            await self.request_token(auto_refresh=True)
+            await self.request_token(auto_refresh=True, force_credentials=True)
         except client_exceptions.ClientResponseError as exc:
             raise SmaEvChargerAuthenticationException(
                 "Could not authorize. Invalid credentials?"
             ) from exc
 
+        self.is_closed = False
         _LOGGER.debug("New SmaEvCharger session established.")
         return True
 
@@ -119,6 +119,7 @@ class SmaEvCharger:
         except (client_exceptions.ContentTypeError, json.decoder.JSONDecodeError):
             _LOGGER.warning("Request to %s did not return valid json.", request_url)
         except client_exceptions.ServerDisconnectedError as exc:
+            await self.close()
             raise SmaEvChargerConnectionException(
                 f"Server at {self.url} disconnected."
             ) from exc
@@ -126,24 +127,36 @@ class SmaEvCharger:
             client_exceptions.ClientConnectionError,
             asyncio.exceptions.TimeoutError,
         ) as exc:
+            await self.close()
             raise SmaEvChargerConnectionException(
-                f"Could not connect to SMA EV Charger at {self.url}: {exc}"
+                f"Could not connect to SMA EV Charger at {self.url}"
             ) from exc
-
         return {}
 
-    async def request_token(self, auto_refresh: bool = True) -> str:
+    async def request_token(
+        self, auto_refresh: bool = True, force_credentials: bool = True
+    ) -> str:
         """Request new token document."""
+        if self.token_refresh_handle is not None:
+            self.token_refresh_handle.cancel()
+
         headers = {"Content-Type": HEADER_CONTENT_TYPE_TOKEN}
-        if self.refresh_token:
+        if self.refresh_token and not force_credentials:
+            _LOGGER.debug("Request token using refresh token.")
             data = f"grant_type=refresh_token&refresh_token={self.refresh_token}"
         else:
+            _LOGGER.debug("Request token using credentials.")
             data = (
                 f"grant_type=password&username={self.username}&password={self.password}"
             )
         result = await self.request_json(
             hdrs.METH_POST, URL_TOKEN, data, headers=headers
         )
+        if not result:
+            _LOGGER.debug("No token received.")
+            self.refresh_token = ""
+            return result
+
         self.access_token = result["access_token"]
         self.refresh_token = result["refresh_token"]
         expires_in = result.get("expires_in", TOKEN_TIMEOUT)
