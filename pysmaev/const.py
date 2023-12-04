@@ -41,6 +41,8 @@ class SmaEvChargerParameters(StrEnum):
     # General
     YES = "1129"
     NO = "1130"
+    NONE = "302"
+    EXECUTE = "1146"
 
     # Operating mode of charge session
     BOOST_CHARGING = "4718"
