@@ -33,6 +33,7 @@ class SmaEvChargerMeasurements(IntEnum):
     NOT_CONNECTED = 200111
     SLEEP_MODE = 200112
     ACTIVE_MODE = 200113
+    STATION_LOCKED = 5169
 
 
 class SmaEvChargerParameters(StrEnum):
