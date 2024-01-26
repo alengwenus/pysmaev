@@ -4,7 +4,6 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name        = "pysmaev"
-version     = "0.1.5"
 license     = {text = "MIT"}
 description = "SMA EV Charger library"
 readme      = "README.md"
@@ -21,6 +20,7 @@ classifiers = [
     "Topic :: Home Automation",
 ]
 requires-python = ">=3.11.0"
+dynamic = ["version"]
 dependencies    = [
     "aiohttp>3.3,<4",
 ]
@@ -28,6 +28,9 @@ dependencies    = [
 [project.urls]
 "Source Code" = "https://github.com/alengwenus/pysmaev"
 "Bug Reports" = "https://github.com/alengwenus/pysmaev/issues"
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
 
 [tool.setuptools]
 platforms = ["any"]
