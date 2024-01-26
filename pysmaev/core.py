@@ -21,22 +21,11 @@ from .const import (
     URL_SET_PARAMETERS,
     URL_TOKEN,
 )
+from .exceptions import SmaEvChargerAuthenticationError, SmaEvChargerConnectionError
 from .helpers import evchargerformat, get_parameters_channel
 
 _LOGGER = logging.getLogger(__name__)
 # _LOGGER.setLevel(logging.DEBUG)
-
-
-class SmaEvChargerException(Exception):
-    """Base exception for pysmaev."""
-
-
-class SmaEvChargerConnectionException(SmaEvChargerException):
-    """Server connection exception."""
-
-
-class SmaEvChargerAuthenticationException(SmaEvChargerException):
-    """Server authentication exception."""
 
 
 class SmaEvCharger:
@@ -68,7 +57,7 @@ class SmaEvCharger:
         try:
             await self.request_token(auto_refresh=True, force_credentials=True)
         except client_exceptions.ClientResponseError as exc:
-            raise SmaEvChargerAuthenticationException(
+            raise SmaEvChargerAuthenticationError(
                 "Could not authorize. Invalid credentials?"
             ) from exc
 
@@ -121,7 +110,7 @@ class SmaEvCharger:
             _LOGGER.warning("Request to %s did not return valid json.", request_url)
         except client_exceptions.ServerDisconnectedError as exc:
             await self.close()
-            raise SmaEvChargerConnectionException(
+            raise SmaEvChargerConnectionError(
                 f"Server at {self.url} disconnected."
             ) from exc
         except (
@@ -129,7 +118,7 @@ class SmaEvCharger:
             asyncio.exceptions.TimeoutError,
         ) as exc:
             await self.close()
-            raise SmaEvChargerConnectionException(
+            raise SmaEvChargerConnectionError(
                 f"Could not connect to SMA EV Charger at {self.url}"
             ) from exc
         return {}
