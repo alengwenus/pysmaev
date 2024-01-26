@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 import json
 import logging
 from typing import Any
+from urllib.parse import quote_plus
 
 from aiohttp import ClientSession, ClientTimeout, client_exceptions, hdrs
 
@@ -146,9 +147,7 @@ class SmaEvCharger:
             data = f"grant_type=refresh_token&refresh_token={self.refresh_token}"
         else:
             _LOGGER.debug("Request token using credentials.")
-            data = (
-                f"grant_type=password&username={self.username}&password={self.password}"
-            )
+            data = f"grant_type=password&username={quote_plus(self.username)}&password={quote_plus(self.password)}"
         result = await self.request_json(
             hdrs.METH_POST, URL_TOKEN, data, headers=headers
         )
