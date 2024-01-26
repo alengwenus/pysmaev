@@ -2,6 +2,8 @@
 
 from datetime import datetime
 
+from .exceptions import SmaEvChargerChannelError
+
 
 def get_measurements_channel(
     measurements: list[dict], channel_id: str, component_id: str = "IGULD:SELF"
@@ -29,13 +31,13 @@ def get_parameters_channel(
         if component["componentId"] == component_id:
             break
     else:
-        raise KeyError(f"component_id {component_id} does not exist")
+        raise SmaEvChargerChannelError(f"component_id {component_id} does not exist")
 
     for channel in component["values"]:
         if channel["channelId"] == channel_id:
             break
     else:
-        raise KeyError(f"channel_id {channel_id} does not exist")
+        raise SmaEvChargerChannelError(f"channel_id {channel_id} does not exist")
 
     return channel
 
