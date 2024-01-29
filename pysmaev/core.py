@@ -171,6 +171,21 @@ class SmaEvCharger:
             hdrs.METH_POST, URL_PARAMETERS, CONTENT_PARAMETERS
         )
 
+    async def get_measurement_channels(self) -> list[str]:
+        """Get measurement channel names."""
+        return [
+            measurement["channelId"]
+            for measurement in await self.request_measurements()
+        ]
+
+    async def get_parameter_channels(self) -> list[str]:
+        """Get parameter channel names."""
+        return [
+            parameter["channelId"]
+            for component in await self.request_parameters()
+            for parameter in component["values"]
+        ]
+
     async def set_parameter(
         self, value: str, channel_id: str, component_id: str = "IGULD:SELF"
     ) -> dict:
