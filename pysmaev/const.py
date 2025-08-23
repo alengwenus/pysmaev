@@ -24,6 +24,7 @@ class SmaEvChargerMeasurements(IntEnum):
     WARNING = 455
     ALARM = 35
     OFF = 303
+    ON = 308
 
     # Position of rotary switch
     SMART_CHARGING = 4950
