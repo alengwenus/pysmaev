@@ -6,6 +6,7 @@ from datetime import datetime
 import pytest
 
 from pysmaev import helpers
+from pysmaev.exceptions import SmaEvChargerChannelError
 
 
 def test_evchargerformat():
@@ -97,6 +98,6 @@ def test_get_parameters_channel_keyerror(
 ):
     """Test get_parameters_channel KeyError."""
     measurements = json.loads(response_parameters)
-    with pytest.raises(KeyError) as exc_info:
+    with pytest.raises(SmaEvChargerChannelError) as exc_info:
         helpers.get_parameters_channel(measurements, channel_id, component_id)
     assert exc_info.match(message)
