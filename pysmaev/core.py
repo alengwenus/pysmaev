@@ -1,9 +1,9 @@
 """SMA EV Charger connection."""
 
 import asyncio
-from datetime import UTC, datetime
 import json
 import logging
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import quote_plus
 
@@ -106,7 +106,7 @@ class SmaEvCharger:
                 response_json = await response.json()
                 _LOGGER.debug("Response received: %s", response_json)
                 return response_json or {}
-        except (client_exceptions.ContentTypeError, json.decoder.JSONDecodeError):
+        except client_exceptions.ContentTypeError, json.decoder.JSONDecodeError:
             _LOGGER.warning("Request to %s did not return valid json.", request_url)
         except client_exceptions.ServerDisconnectedError as exc:
             await self.close()

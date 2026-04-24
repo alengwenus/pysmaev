@@ -1,4 +1,5 @@
 """Constants for pysmaev."""
+
 from enum import IntEnum, StrEnum
 
 URL_TOKEN = "/api/v1/token"
