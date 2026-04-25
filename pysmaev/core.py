@@ -1,9 +1,9 @@
 """SMA EV Charger connection."""
 
 import asyncio
-from datetime import UTC, datetime
 import json
 import logging
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import quote_plus
 
@@ -72,18 +72,20 @@ class SmaEvCharger:
             self.token_refresh_handle.cancel()
         _LOGGER.debug("SmaEVCharger session is closed.")
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> SmaEvCharger:
         """Enter async context."""
         await self.open()
         return self
 
-    async def __aexit__(self, exception_type: Any, exception: Any, traceback: Any):
+    async def __aexit__(
+        self, exception_type: Any, exception: Any, traceback: Any
+    ) -> None:
         """Exit async context."""
         await self.close()
 
     async def request_json(
-        self, method: str, url: str, data: str, headers: str | None = None
-    ) -> dict:
+        self, method: str, url: str, data: str, headers: dict[str, str] | None = None
+    ) -> Any:
         """Request json document."""
         request_url = self.url + url
         data_encoded = data.encode()
@@ -106,7 +108,7 @@ class SmaEvCharger:
                 response_json = await response.json()
                 _LOGGER.debug("Response received: %s", response_json)
                 return response_json or {}
-        except (client_exceptions.ContentTypeError, json.decoder.JSONDecodeError):
+        except client_exceptions.ContentTypeError, json.decoder.JSONDecodeError:
             _LOGGER.warning("Request to %s did not return valid json.", request_url)
         except client_exceptions.ServerDisconnectedError as exc:
             await self.close()
@@ -125,7 +127,7 @@ class SmaEvCharger:
 
     async def request_token(
         self, auto_refresh: bool = True, force_credentials: bool = True
-    ) -> str:
+    ) -> Any:
         """Request new token document."""
         if self.token_refresh_handle is not None:
             self.token_refresh_handle.cancel()
@@ -159,13 +161,13 @@ class SmaEvCharger:
 
         return result
 
-    async def request_measurements(self) -> dict:
+    async def request_measurements(self) -> Any:
         """Request measurements."""
         return await self.request_json(
             hdrs.METH_POST, URL_MEASUREMENTS, CONTENT_MEASUREMENT
         )
 
-    async def request_parameters(self) -> dict:
+    async def request_parameters(self) -> Any:
         """Request parameters."""
         return await self.request_json(
             hdrs.METH_POST, URL_PARAMETERS, CONTENT_PARAMETERS
@@ -188,7 +190,7 @@ class SmaEvCharger:
 
     async def set_parameter(
         self, value: str, channel_id: str, component_id: str = "IGULD:SELF"
-    ) -> dict:
+    ) -> Any:
         """Set parameters."""
         request_url = URL_SET_PARAMETERS + "/" + component_id
         data = {
@@ -203,7 +205,7 @@ class SmaEvCharger:
         data_json = json.dumps(data, separators=(",", ":"))
         return await self.request_json(hdrs.METH_PUT, request_url, data_json)
 
-    async def device_info(self) -> dict:
+    async def device_info(self) -> dict[str, Any]:
         """Read device info."""
         params = await self.request_parameters()
         name_channel = get_parameters_channel(
@@ -221,7 +223,7 @@ class SmaEvCharger:
         pkgrev_channel = get_parameters_channel(
             params, channel_id="Parameter.Nameplate.PkgRev"
         )
-        device_info = {
+        device_info: dict[str, Any] = {
             "name": name_channel["value"],
             "serial": serial_channel["value"],
             "model": model_channel["value"],

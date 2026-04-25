@@ -33,6 +33,7 @@ lib64
 # Testing
 .tox
 .coverage
+coverage.xml
 
 # Build docs
 docs/build

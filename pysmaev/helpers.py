@@ -1,13 +1,16 @@
 """Helpers for pysmaev."""
 
 from datetime import datetime
+from typing import Any
 
 from .exceptions import SmaEvChargerChannelError
 
 
 def get_measurements_channel(
-    measurements: list[dict], channel_id: str, component_id: str = "IGULD:SELF"
-):
+    measurements: list[dict[str, Any]],
+    channel_id: str,
+    component_id: str = "IGULD:SELF",
+) -> Any:
     """Return channel data from measurements."""
     for channel in measurements:
         if (
@@ -24,8 +27,10 @@ def get_measurements_channel(
 
 
 def get_parameters_channel(
-    parameters: list[dict], channel_id: str, component_id: str = "IGULD:SELF"
-):
+    parameters: list[dict[str, Any]],
+    channel_id: str,
+    component_id: str = "IGULD:SELF",
+) -> Any:
     """Return channel data from parameters."""
     for component in parameters:
         if component["componentId"] == component_id:
@@ -42,6 +47,6 @@ def get_parameters_channel(
     return channel
 
 
-def evchargerformat(timestamp: datetime):
+def evchargerformat(timestamp: datetime) -> str:
     """Convert timestamp to EV Charger format."""
     return f"{timestamp.isoformat(timespec='milliseconds').split('+')[0]}Z"

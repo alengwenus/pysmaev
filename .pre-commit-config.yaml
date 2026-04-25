@@ -1,31 +1,37 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.0.289
+    rev: v0.15.8
     hooks:
       - id: ruff
         args:
           - --fix
-  - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 23.9.1
-    hooks:
-      - id: black
-        args:
-          - --quiet
+      - id: ruff-format
         files: ^((pysmaev|tests)/.+)?[^/]+\.py$
   - repo: https://github.com/codespell-project/codespell
-    rev: v2.2.2
+    rev: v2.4.2
     hooks:
       - id: codespell
         args:
-          - --skip="./.*,*.json
+          - --ignore-words-list=hass,
+          - --skip="./.*,*.json,*.ambr"
           - --quiet-level=2
-        exclude_types: [json]
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+  - repo: local
     hooks:
-      - id: check-json
-        exclude: (.vscode|.devcontainer)
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.7.1
-    hooks:
-      - id: prettier
+    - id: mypy
+      name: mypy pysmaev
+      entry: uv run mypy
+      language: system
+      require_serial: true
+      args:
+        - --strict
+        - -v
+      files: ^(pysmaev)/.+\.py$
+    - id: mypy
+      name: mypy tests
+      entry: uv run mypy
+      language: system
+      require_serial: true
+      args:
+        - --strict
+        - -v
+      files: ^(tests)/.+\.py$
