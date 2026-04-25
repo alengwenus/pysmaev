@@ -9,7 +9,7 @@ from pysmaev import helpers
 from pysmaev.exceptions import SmaEvChargerChannelError
 
 
-def test_evchargerformat():
+def test_evchargerformat() -> None:
     """Test EV Charger time formatting."""
     timestamp = datetime(2023, 12, 3, 4, 56, 7, 123456)
     formatted_timestamp = helpers.evchargerformat(timestamp)
@@ -24,7 +24,9 @@ def test_evchargerformat():
         ("Measurement.Operation.EVeh.Health", 307),
     ],
 )
-def test_get_measurements_channel(response_measurements, channel_id, value):
+def test_get_measurements_channel(
+    response_measurements: str, channel_id: str, value: int
+) -> None:
     """Test get_measurements_channel."""
     measurements = json.loads(response_measurements)
     component_id = "IGULD:SELF"
@@ -49,8 +51,8 @@ def test_get_measurements_channel(response_measurements, channel_id, value):
     ],
 )
 def test_get_measurements_channel_keyerror(
-    response_measurements, component_id, channel_id, message
-):
+    response_measurements: str, component_id: str, channel_id: str, message: str
+) -> None:
     """Test get_measurements_channel KeyError."""
     measurements = json.loads(response_measurements)
     with pytest.raises(KeyError) as exc_info:
@@ -66,7 +68,9 @@ def test_get_measurements_channel_keyerror(
         ("Parameter.Chrg.Plan.StopTm", "1701579367"),
     ],
 )
-def test_get_parameters_channel(response_parameters, channel_id, value):
+def test_get_parameters_channel(
+    response_parameters: str, channel_id: str, value: str
+) -> None:
     """Test get_parameters_channel."""
     parameters = json.loads(response_parameters)
     component_id = "IGULD:SELF"
@@ -94,8 +98,8 @@ def test_get_parameters_channel(response_parameters, channel_id, value):
     ],
 )
 def test_get_parameters_channel_keyerror(
-    response_parameters, component_id, channel_id, message
-):
+    response_parameters: str, component_id: str, channel_id: str, message: str
+) -> None:
     """Test get_parameters_channel KeyError."""
     measurements = json.loads(response_parameters)
     with pytest.raises(SmaEvChargerChannelError) as exc_info:

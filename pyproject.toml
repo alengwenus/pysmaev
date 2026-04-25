@@ -50,6 +50,14 @@ platforms = ["any"]
 zip-safe  = false
 include-package-data = true
 
+[tool.mypy]
+strict = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unreachable = true
+disallow_any_generics = true
+no_implicit_reexport = true
+
 [tool.ruff.lint]
 select = [
     "B002",    # Python does not support the unary prefix increment

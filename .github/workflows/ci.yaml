@@ -30,6 +30,9 @@ jobs:
     - name: Run ruff
       run: |
         uv run pre-commit run ruff --all-files --show-diff-on-failure
+    - name: Run mypy
+      run: |
+        uv run pre-commit run mypy --all-files --show-diff-on-failure
     - name: Run pytest
       run: |
         uv run pytest -v --cov=custom_components --cov-report=xml

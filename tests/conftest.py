@@ -6,7 +6,7 @@ import pytest
 
 
 @pytest.fixture(scope="session")
-def response_measurements():
+def response_measurements() -> str:
     """Load measurements json."""
     filepath = Path(__file__).parent / "fixtures/measurements.json"
     with filepath.open(encoding="utf-8") as fid:
@@ -15,7 +15,7 @@ def response_measurements():
 
 
 @pytest.fixture(scope="session")
-def response_parameters():
+def response_parameters() -> str:
     """Load parameters json."""
     filepath = Path(__file__).parent / "fixtures/parameters.json"
     with filepath.open(encoding="utf-8") as fid:

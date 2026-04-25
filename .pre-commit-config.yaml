@@ -17,18 +17,21 @@ repos:
           - --quiet-level=2
   - repo: local
     hooks:
-      - id: mypy-pysmaev
-        name: mypy pysmaev
-        entry: uv run mypy
-        language: system
-        args:
-          - --strict
-        files: ^(pysmaev)/.+\.py$
-      # - id: mypy-tests
-      #   name: mypy tests
-      #   entry: uv run mypy
-      #   language: system
-      #   args:
-      #     - --strict
-      #     - --allow-untyped-defs
-      #   files: ^(tests)/.+\.py$
+    - id: mypy
+      name: mypy pysmaev
+      entry: uv run mypy
+      language: system
+      require_serial: true
+      args:
+        - --strict
+        - -v
+      files: ^(pysmaev)/.+\.py$
+    - id: mypy
+      name: mypy tests
+      entry: uv run mypy
+      language: system
+      require_serial: true
+      args:
+        - --strict
+        - -v
+      files: ^(tests)/.+\.py$
