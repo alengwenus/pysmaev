@@ -4,7 +4,7 @@ import asyncio
 import json
 import logging
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, cast
 from urllib.parse import quote_plus
 
 from aiohttp import ClientSession, ClientTimeout, client_exceptions, hdrs
@@ -22,7 +22,14 @@ from .const import (
     URL_TOKEN,
 )
 from .exceptions import SmaEvChargerAuthenticationError, SmaEvChargerConnectionError
-from .helpers import evchargerformat, get_parameters_channel
+from .helpers import (
+    JsonArrayType,
+    JsonObjectType,
+    JsonValueType,
+    evchargerformat,
+    expect_type,
+    get_parameters_channel,
+)
 
 _LOGGER = logging.getLogger(__name__)
 # _LOGGER.setLevel(logging.DEBUG)
@@ -46,8 +53,8 @@ class SmaEvCharger:
         if not url.startswith("http"):
             self.url = f"http://{self.url}"
         self.client = None
-        self.access_token = ""
-        self.refresh_token = ""
+        self.access_token: str = ""
+        self.refresh_token: str = ""
         self.is_closed = True
         self.token_refresh_handle: asyncio.TimerHandle | None = None
 
@@ -85,7 +92,7 @@ class SmaEvCharger:
 
     async def request_json(
         self, method: str, url: str, data: str, headers: dict[str, str] | None = None
-    ) -> Any:
+    ) -> JsonValueType:
         """Request json document."""
         request_url = self.url + url
         data_encoded = data.encode()
@@ -127,7 +134,7 @@ class SmaEvCharger:
 
     async def request_token(
         self, auto_refresh: bool = True, force_credentials: bool = True
-    ) -> Any:
+    ) -> JsonObjectType:
         """Request new token document."""
         if self.token_refresh_handle is not None:
             self.token_refresh_handle.cancel()
@@ -139,17 +146,18 @@ class SmaEvCharger:
         else:
             _LOGGER.debug("Request token using credentials.")
             data = f"grant_type=password&username={quote_plus(self.username)}&password={quote_plus(self.password)}"
-        result = await self.request_json(
-            hdrs.METH_POST, URL_TOKEN, data, headers=headers
+        result = cast(
+            JsonObjectType,
+            await self.request_json(hdrs.METH_POST, URL_TOKEN, data, headers=headers),
         )
         if not result:
             _LOGGER.debug("No token received.")
             self.refresh_token = ""
             return result
 
-        self.access_token = result["access_token"]
-        self.refresh_token = result["refresh_token"]
-        expires_in = result.get("expires_in", TOKEN_TIMEOUT)
+        self.access_token = expect_type(str, result["access_token"])
+        self.refresh_token = expect_type(str, result["refresh_token"])
+        expires_in = expect_type(int, result.get("expires_in", TOKEN_TIMEOUT))
         _LOGGER.debug("New access token: %s", self.access_token)
         _LOGGER.debug("New refresh token: %s", self.refresh_token)
 
@@ -161,31 +169,35 @@ class SmaEvCharger:
 
         return result
 
-    async def request_measurements(self) -> Any:
+    async def request_measurements(self) -> JsonArrayType:
         """Request measurements."""
-        return await self.request_json(
-            hdrs.METH_POST, URL_MEASUREMENTS, CONTENT_MEASUREMENT
+        return cast(
+            JsonArrayType,
+            await self.request_json(
+                hdrs.METH_POST, URL_MEASUREMENTS, CONTENT_MEASUREMENT
+            ),
         )
 
-    async def request_parameters(self) -> Any:
+    async def request_parameters(self) -> JsonArrayType:
         """Request parameters."""
-        return await self.request_json(
-            hdrs.METH_POST, URL_PARAMETERS, CONTENT_PARAMETERS
+        return cast(
+            JsonArrayType,
+            await self.request_json(hdrs.METH_POST, URL_PARAMETERS, CONTENT_PARAMETERS),
         )
 
     async def get_measurement_channels(self) -> list[str]:
         """Get measurement channel names."""
         return [
-            measurement["channelId"]
+            expect_type(str, expect_type(dict, measurement)["channelId"])
             for measurement in await self.request_measurements()
         ]
 
     async def get_parameter_channels(self) -> list[str]:
         """Get parameter channel names."""
         return [
-            parameter["channelId"]
+            expect_type(str, parameter["channelId"])
             for component in await self.request_parameters()
-            for parameter in component["values"]
+            for parameter in expect_type(dict, component)["values"]
         ]
 
     async def set_parameter(
